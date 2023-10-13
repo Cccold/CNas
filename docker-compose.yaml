@@ -1,0 +1,112 @@
+---
+version: "0.1"
+services:
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Shanghai
+      - WEBUI_PORT=8080
+    volumes:
+      - /config/qbittorrent:/config
+      - /download:/downloads
+    ports:
+      - $:8080
+      - 16881:16881
+      - 16881:16881/udp
+    restart: unless-stopped
+
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:latest
+    container_name: jellyfin
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Shanghai
+      - JELLYFIN_PublishedServerUrl=192.168.50.66 #optional
+      - HTTP_PROXY=ssr
+      - HTTPS_PROXY=ssr
+    volumes:
+      - /config/jellyfin:/config
+      - /download:/data/downloads
+    ports:
+      - $:8096
+      # - 8920:8920 #optional
+      # - 7359:7359/udp #optional
+      # - 1900:1900/udp #optionalexport
+    # devices:
+    #   - /dev/dri:/dev/dri
+    restart: unless-stopped
+
+  webdav:
+    image: ugeek/webdav:amd64
+    container_name: webdav
+    ports:
+      - "$:80"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - USERNAME=$
+      - PASSWORD=$
+      - TZ=Aisa/Shanghai
+    volumes:
+      - /download:/media
+    restart: unless-stopped
+
+  adguardhome:
+    image: adguard/adguardhome
+    container_name: adguardhome
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Shanghai
+    ports:
+      - 53:53/tcp
+      - 53:53/udp
+      - 67:67/udp
+      - 1068:68/udp
+      - 18804:80/tcp
+      # - 443:443/tcp
+      # - 443:443/udp
+      - 3000:3000/tcp
+      - 853:853/tcp
+      - 784:784/udp
+      - 853:853/udp
+      - 8853:8853/udp
+      - 5443:5443/tcp
+      - 5443:5443/udp
+    volumes:
+      - /config/adguardhome/work:/opt/adguardhome/work
+      - /config/adguardhome/conf:/opt/adguardhome/conf
+    restart: unless-stopped
+
+  homepage:
+    image: ghcr.io/benphelps/homepage:latest
+    container_name: homepage
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Shanghai
+    ports:
+      - 18807:3000
+    volumes:
+      - config/homepage/config:/app/config
+      - :/date
+      - /var/run/docker.sock:/var/run/docker.sock:ro # (optional) For docker integrations
+    restart: unless-stopped
+
+  tmm:
+    image: tinymediamanager/tinymediamanager:latest
+    container_name: tmm
+    ports:
+      - 18808:4000
+    volumes:
+      - config/tmm/data:/data
+      - /download/movies:/media/movies
+      - /download/TVseries:/media/TVseries
+    environment:
+      - PUID=1000
+      - PGID=1000
+    restart: unless-stopped
